@@ -7,8 +7,10 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
-    <Grid Background="{ThemeResource AppBarBackgroundThemeBrush}">
-        <WebView x:Name="WebView1"  HorizontalAlignment="Stretch"/>
+    <Grid Background="#FF8A2BE2">
+
+        <WebView x:Name="WebView1"  HorizontalAlignment="Stretch" Visibility="Collapsed" NavigationCompleted="ShowWebView"/>
+        <TextBlock x:Name="LoadingText" HorizontalAlignment="Center" TextWrapping="Wrap" Text="Loading..." VerticalAlignment="Center" Foreground="White" FontFamily="Roboto" FontSize="36"/>
 
 
     </Grid>

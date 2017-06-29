@@ -2,7 +2,11 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
+using System.Net.Http;
 using System.Runtime.InteropServices.WindowsRuntime;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
@@ -29,19 +33,45 @@ namespace Yahoo_Weather
         public MainPage()
         {
             this.InitializeComponent();
-            WebView1.Navigate(new Uri("https://www.yahoo.com/news/weather"));
-            //DeleteDivs();
+            
+            DeleteTags("https://www.yahoo.com/news/weather");
 
         }
 
-        /*public async void DeleteDivs()
+        async Task DeleteTags(string url)
         {
-            var script = new string[]
+            //Create an HTTP client object
+            Windows.Web.Http.HttpClient httpClient = new Windows.Web.Http.HttpClient();
+            
+            //Send the GET request asynchronously and retrieve the response as a string.
+            Windows.Web.Http.HttpResponseMessage httpResponse = new Windows.Web.Http.HttpResponseMessage();
+            string httpResponseBody = "";
+            try
             {
-                "var Bottom = document.getElementById(\"YDC - Bottom\") cells.parentNode.removeChild(Bottom); var add = document.getElementById(\"Col2 - 1 - WeatherVideoList - Proxy\") cells.parentNode.removeChild(add); var Side = document.getElementById(\"YDC - Side\") cells.parentNode.removeChild(Side); var UH = document.getElementById(\"YDC - UH\") cells.parentNode.removeChild(UH); var Side = document.getElementById(\"YDC - Side\") cells.parentNode.removeChild(Side);"
-            };
-            await WebView1.InvokeScriptAsync("eval", script);
-        }*/
+
+                //Send the GET request
+                httpResponse = await httpClient.GetAsync(new Uri(url));
+                httpResponse.EnsureSuccessStatusCode();
+                httpResponseBody = await httpResponse.Content.ReadAsStringAsync();
+                
+                //Hidde some tags
+                httpResponseBody = Regex.Replace(httpResponseBody, "div id=\"YDC-UH\"", "div id=\"YDC-UH\" hidden");
+                httpResponseBody = Regex.Replace(httpResponseBody, "<div id=\"YDC-Side-Stack\"", "<div id=\"YDC-Side-Stack\" hidden");
+                httpResponseBody = Regex.Replace(httpResponseBody, "<div class=\"c", "<div hidden class=\"c");
+                httpResponseBody = Regex.Replace(httpResponseBody, "<div id=\"YDC-Bottom\" ", "<div id=\"YDC-Bottom\" hidden ");
+                //httpResponseBody = Regex.Replace(httpResponseBody, "<button class=\"D.ib.", "<button hidden class=\"D.ib.");
+
+            }
+            catch (Exception ex)
+            {
+                httpResponseBody =
+                    "<!DOCTYPE html> <html> <head> <link href=\"https://fonts.googleapis.com/css?family=Roboto\" rel=\"stylesheet\"> </head> <body style=\"background-color:BlueViolet;\"> <div style=\"width: 300px; height: 300px; position: absolute; left: 50%; top: 50%; margin-left: -150px; margin-top: -150px;\"><center><font color=\"white\"><h1 style=\"font-family: 'Roboto', sans-serif;\">" +
+                    "</ h1 ></ font ></ center ></ div > </ body > </ html > " + "Error: " + ex.HResult.ToString("X") +
+                    " Message: " + ex.Message.TrimEnd() + ".";
+
+            }
+            WebView1.NavigateToString(httpResponseBody);
+        }
 
         private static void SetTitleBarBackground()
         {
@@ -65,7 +95,7 @@ namespace Yahoo_Weather
             SetTitleBarBackground();
             var currentView = SystemNavigationManager.GetForCurrentView();
             //1. Make the button Visible
-            currentView.AppViewBackButtonVisibility = AppViewBackButtonVisibility.Visible; //Show Button
+            if (WebView1.CanGoBack) currentView.AppViewBackButtonVisibility = AppViewBackButtonVisibility.Visible; //Show Button
             //2. Detect button presses
             currentView.BackRequested += backButton_Tapped;
 
@@ -74,7 +104,13 @@ namespace Yahoo_Weather
 
         private void backButton_Tapped(object sender, BackRequestedEventArgs e)
         {
-            if(WebView1.CanGoBack) WebView1.GoBack();
+            if (WebView1.CanGoBack) WebView1.GoBack();
+        }
+
+        private void ShowWebView(WebView sender, WebViewNavigationCompletedEventArgs args)
+        {
+            LoadingText.Visibility = Visibility.Collapsed;
+            WebView1.Visibility = Visibility.Visible;
         }
     }
 }
